@@ -1,0 +1,584 @@
+name: redhat-enterprise-linux-10-stig-baseline
+title: redhat-enterprise-linux-10-stig-baseline
+maintainer: MITRE SAF Team
+copyright: MITRE
+license: Apache-2.0
+summary: "InSpec profile aligned to DISA STIG for RHEL 10 V1R1"
+version: 1.0.0
+inspec_version: ">= 5.0"
+
+supports:
+  - platform-family: redhat
+    release: 10.*
+
+### INPUTS ###
+# Inputs are variables that can be referenced by any control in the profile,
+# and are defined and given a default value in this file.
+#
+# By default, each parameter is set to exactly comply with the STIG baseline
+# wherever possible. Some STIG controls will require you to update an input
+# to provide the profile with necessary context for your system.
+#
+# Override default values using an input file or a CLI flag at execution time.
+# See https://docs.chef.io/inspec/profiles/inputs/ for details.
+#
+# NOTE: DO NOT directly change the default values by editing this file. Use
+# overrides instead.
+###
+
+inputs:
+  # SV-280094 and related
+  - name: disable_slow_controls
+    description: Controls that are known to consistently have long run times can be disabled with this attribute
+    type: Boolean
+    value: false
+
+  # SV-280931
+  - name: disconnected_system
+    description: The system is not connected to the public internet or doesn't have access to an RPM package server
+    type: Boolean
+    value: false
+
+  # Crypto policy
+  - name: use_fips
+    description: "'(boolean)' Set to true if the system is required to use FIPS Encryption"
+    type: Boolean
+    value: true
+
+  - name: system_wide_crypto_policy
+    description: The system-wide crypto policy
+    type: String
+    value: 'FIPS'
+
+  # SSH configuration
+  - name: allow_container_openssh_server
+    description: "If the OpenSSH Server has been approved outside standard container guidance"
+    type: Boolean
+    value: false
+
+  - name: physical_protections_employed
+    description: "If physical means of protection are employed, then logical means do not have to be employed."
+    type: Boolean
+    value: true
+
+  - name: sshd_config_values
+    description: 'The agreed sshd server config values for the organization'
+    type: Hash
+    value:
+      GSSAPIAuthentication: 'no'
+      ClientAliveInterval: '600'
+
+  - name: ssh_host_key_dirs
+    description: Directories where public host SSH keys for the server are stored
+    type: Array
+    value:
+      - /etc/ssh/
+      - /home/
+
+  - name: ssh_pub_key_mode
+    description: All public ssh keyfiles on the filesystem should be equal or less permissive than this octet
+    type: String
+    value: '0644'
+
+  - name: ssh_private_key_mode
+    description: All private ssh keyfiles on the filesystem should be equal or less permissive than this octet
+    type: String
+    value: '0640'
+
+  - name: client_alive_interval
+    description: "'(number in seconds)' Set to the maximum acceptable interval for SSH client keepalive"
+    type: Numeric
+    value: 600
+
+  # PAM and password policy
+  - name: unsuccessful_attempts
+    description: The number of allowed failed login attempts
+    type: Numeric
+    value: 3
+
+  - name: fail_interval
+    description: Interval of time in which the consecutive failed logon attempts must occur (seconds)
+    type: Numeric
+    value: 900
+
+  - name: lockout_time
+    description: Minimum amount of time account must be locked out after failed logins (seconds)
+    type: Numeric
+    value: 604800
+
+  - name: pass_min_days
+    description: The minimum password lifetime restriction in days
+    type: Numeric
+    value: 1
+
+  - name: pass_max_days
+    description: The maximum password lifetime restriction in days
+    type: Numeric
+    value: 60
+
+  - name: pass_min_len
+    description: Minimum number of characters for a new password
+    type: Numeric
+    value: 15
+
+  - name: difok
+    description: The minimum number of required changed characters when passwords are updated
+    type: Numeric
+    value: 8
+
+  - name: min_reuse_generations
+    description: Number of generations of old passwords to remember
+    type: Numeric
+    value: 5
+
+  - name: maxclassrepeat
+    description: The maximum number of repeating characters of the same character class for passwords
+    type: Numeric
+    value: 4
+
+  - name: maxrepeat
+    description: The maximum number of repeating characters when passwords are updated
+    type: Numeric
+    value: 3
+
+  - name: minclass
+    description: The minimum number of character classes that should change when passwords are updated
+    type: Numeric
+    value: 4
+
+  - name: min_retry
+    description: Number of permitted password retries
+    type: Numeric
+    value: 3
+
+  - name: days_of_inactivity
+    description: "'(number of days)' Maximum number of days an account may be inactive before being disabled"
+    type: Numeric
+    value: 35
+
+  - name: pam_auth_files
+    description: PAM authentication configuration files
+    type: Hash
+    value:
+      system-auth: /etc/pam.d/system-auth
+      password-auth: /etc/pam.d/password-auth
+
+  # Account management
+  - name: known_system_accounts
+    description: System accounts that support approved system activities.
+    type: Array
+    value:
+      - adm
+      - bin
+      - chrony
+      - daemon
+      - dbus
+      - halt
+      - lp
+      - mail
+      - nobody
+      - ntp
+      - operator
+      - polkitd
+      - postfix
+      - root
+      - shutdown
+      - sshd
+      - sssd
+      - sync
+      - systemd-bus-proxy
+      - systemd-network
+      - systemd-oom
+      - systemd-resolve
+
+  - name: user_accounts
+    description: Accounts of known managed users
+    type: Array
+    value: []
+
+  - name: disallowed_accounts
+    description: Accounts that are not allowed on the system
+    type: Array
+    value:
+      - games
+      - gopher
+      - ftp
+
+  - name: non_interactive_shells
+    description: These shells do not allow a user to login
+    type: Array
+    value:
+      - "/sbin/nologin"
+      - "/sbin/halt"
+      - "/sbin/shutdown"
+      - "/bin/false"
+      - "/bin/sync"
+      - "/bin/true"
+
+  - name: exempt_interactive_system_accounts
+    description: System accounts that are exempt from the non-interactive shell requirement
+    type: Array
+    value:
+      - root
+
+  - name: exempt_home_users
+    description: Users exempt from home directory-based controls in array format
+    type: Array
+    value:
+      - root
+
+  - name: admin_logins
+    description: System accounts that support approved system activities
+    type: Array
+    value: []
+
+  - name: concurrent_sessions_permitted
+    description: Number of permitted concurrent sessions on this system
+    type: Numeric
+    value: 10
+
+  # Sudoers
+  - name: sudoers_config_files
+    description: 'The files and directories you keep your sudoers configs'
+    type: Array
+    value:
+      - '/etc/sudoers'
+      - '/etc/sudoers.d/*'
+
+  - name: passwordless_admins
+    description: List of administrative groups permitted by ISSO to have NOPASSWD set in sudoers files
+    type: Array
+    value: []
+
+  # Audit
+  - name: audit_conf_mode
+    description: All audit config files on the filesystem should be equal or less permissive than this octet
+    type: String
+    value: '0640'
+
+  - name: audit_tool_mode
+    description: All audit tools on the filesystem should be equal or less permissive than this octet
+    type: String
+    value: '0755'
+
+  # File integrity
+  - name: file_integrity_tool
+    description: Name of file integrity tool
+    type: String
+    value: "aide"
+
+  - name: file_integrity_interval
+    description: "'(monthly, weekly, or daily)' How often the file integrity tool runs"
+    type: String
+    value: "weekly"
+
+  # Banners
+  - name: banner_message_enabled
+    description: Set to true if banner messages are enabled
+    type: Boolean
+    value: true
+
+  - name: banner_message_text_gui
+    description: The content of the GUI login banner
+    type: String
+    value: >-
+      You are accessing a U.S. Government (USG) Information System (IS) that is
+      provided for USG-authorized use only. By using this IS (which includes any
+      device attached to this IS), you consent to the following conditions: -The USG
+      routinely intercepts and monitors communications on this IS for purposes
+      including, but not limited to, penetration testing, COMSEC monitoring, network
+      operations and defense, personnel misconduct (PM), law enforcement (LE), and
+      counterintelligence (CI) investigations. -At any time, the USG may inspect and
+      seize data stored on this IS. -Communications using, or data stored on, this
+      IS are not private, are subject to routine monitoring, interception, and
+      search, and may be disclosed or used for any USG-authorized purpose. -This IS
+      includes security measures (e.g., authentication and access controls) to
+      protect USG interests--not for your personal benefit or privacy.
+      -Notwithstanding the above, using this IS does not constitute consent to PM,
+      LE or CI investigative searching or monitoring of the content of privileged
+      communications, or work product, related to personal representation or
+      services by attorneys, psychotherapists, or clergy, and their assistants. Such
+      communications and work product are private and confidential. See User
+      Agreement for details.
+
+  - name: banner_message_text_cli
+    description: The content of the CLI login banner
+    type: String
+    value: >-
+      You are accessing a U.S. Government (USG) Information System (IS) that is
+      provided for USG-authorized use only. By using this IS (which includes any
+      device attached to this IS), you consent to the following conditions: -The USG
+      routinely intercepts and monitors communications on this IS for purposes
+      including, but not limited to, penetration testing, COMSEC monitoring, network
+      operations and defense, personnel misconduct (PM), law enforcement (LE), and
+      counterintelligence (CI) investigations. -At any time, the USG may inspect and
+      seize data stored on this IS. -Communications using, or data stored on, this
+      IS are not private, are subject to routine monitoring, interception, and
+      search, and may be disclosed or used for any USG-authorized purpose. -This IS
+      includes security measures (e.g., authentication and access controls) to
+      protect USG interests--not for your personal benefit or privacy.
+      -Notwithstanding the above, using this IS does not constitute consent to PM,
+      LE or CI investigative searching or monitoring of the content of privileged
+      communications, or work product, related to personal representation or
+      services by attorneys, psychotherapists, or clergy, and their assistants. Such
+      communications and work product are private and confidential. See User
+      Agreement for details.
+
+  - name: banner_message_text_ral
+    description: The content of the remote access login banner
+    type: String
+    value: >-
+      You are accessing a U.S. Government (USG) Information System (IS) that is
+      provided for USG-authorized use only. By using this IS (which includes any
+      device attached to this IS), you consent to the following conditions: -The USG
+      routinely intercepts and monitors communications on this IS for purposes
+      including, but not limited to, penetration testing, COMSEC monitoring, network
+      operations and defense, personnel misconduct (PM), law enforcement (LE), and
+      counterintelligence (CI) investigations. -At any time, the USG may inspect and
+      seize data stored on this IS. -Communications using, or data stored on, this
+      IS are not private, are subject to routine monitoring, interception, and
+      search, and may be disclosed or used for any USG-authorized purpose. -This IS
+      includes security measures (e.g., authentication and access controls) to
+      protect USG interests--not for your personal benefit or privacy.
+      -Notwithstanding the above, using this IS does not constitute consent to PM,
+      LE or CI investigative searching or monitoring of the content of privileged
+      communications, or work product, related to personal representation or
+      services by attorneys, psychotherapists, or clergy, and their assistants. Such
+      communications and work product are private and confidential. See User
+      Agreement for details.
+
+  # Network
+  - name: ipv4_enabled
+    description: Set to 'true' if IPv4 is enabled on the system.
+    type: Boolean
+    value: true
+
+  - name: ipv6_enabled
+    description: Set to 'true' if IPv6 is enabled on the system.
+    type: Boolean
+    value: true
+
+  - name: network_router
+    description: This indicates if the system is acting as a router on the network
+    type: Boolean
+    value: false
+
+  # Peripherals
+  - name: bluetooth_installed
+    description: "Device or operating system has a Bluetooth adapter installed"
+    type: Boolean
+    value: false
+
+  - name: peripherals_package
+    description: "The name of the package used to manage connected peripherals"
+    type: String
+    value: "usbguard"
+
+  - name: peripherals_service
+    description: "The name of the service used to manage connected peripherals"
+    type: String
+    value: "usbguard"
+
+  # Smart card / MFA
+  - name: smart_card_enabled
+    description: Set to true if smart cards are enabled for the system
+    type: Boolean
+    value: false
+
+  - name: multifactor_enabled
+    description: Should dconf have smart card authentication
+    type: Boolean
+    value: false
+
+  - name: alternate_mfa_method
+    description: Name of the MFA method in place on the system (leave blank if using the default SSSD)
+    type: String
+    value: ''
+
+  - name: sssd_conf_files
+    description: File and directory globs to check for SSSD configuration
+    type: Array
+    value:
+      - /etc/sssd/sssd.conf
+      - /etc/sssd/conf.d/*.conf
+
+  - name: mfa_pkg_list
+    description: The list of packages needed for MFA on RHEL 10
+    type: Array
+    value:
+      - nss-tools
+      - nss-pam-ldapd
+      - opensc
+      - pcsc-lite-ccid
+      - pcsc-lite
+      - pcsc-lite-libs
+      - krb5-libs
+      - krb5-workstation
+      - krb5-pkinit
+
+  # Logging
+  - name: log_aggregation_server
+    description: Set to true if the system is a log aggregation server
+    type: Boolean
+    value: false
+
+  - name: log_pkg_path
+    description: The path to the logging package configuration
+    type: String
+    value: "/etc/rsyslog.conf"
+
+  - name: alert_method
+    description: 'The method used to provide real-time information to the ISSO or AO'
+    type: String
+    value: email
+
+  # Timeserver
+  - name: authoritative_timeservers
+    description: Timeserver(s) used in /etc/chrony.conf
+    type: Array
+    value: []
+
+  # File permissions
+  - name: expected_modes
+    description: Expected modes of system files and/or directories
+    type: Hash
+    value:
+      home_dirs: "0750"
+      cron_dirs: "0700"
+      /etc/group: "0644"
+      /etc/group-: "0644"
+      /etc/gshadow: "0000"
+      /etc/gshadow-: "0000"
+      /etc/passwd: "0644"
+      /etc/passwd-: "0644"
+      /etc/shadow: "0000"
+      /etc/shadow-: "0000"
+      /etc/crontab: "0600"
+      /etc/ssh/sshd_config: "0600"
+      auditd_conf: "0640"
+
+  - name: initialization_file_mode
+    description: All initialization files (.bash_profile etc) should each have a mode equal to or less than this octet
+    type: String
+    value: '0740'
+
+  - name: exempt_ini_files
+    description: List of initialization files that are exempt from permissions checks
+    type: Array
+    value: []
+
+  - name: alternate_ini_file_dirs
+    description: List of directories, other than a user's homedir, to search for initialization files
+    type: Array
+    value: []
+
+  # RPM verification
+  - name: rpm_verify_perms_except
+    description: List of system files that should be allowed to change from an rpm verify point of view
+    type: Array
+    value: []
+
+  - name: rpm_verify_integrity_except
+    description: List of system files that should be allowed to change from an rpm verify integrity point of view
+    type: Array
+    value: []
+
+  # Application groups
+  - name: application_groups
+    description: Known application groups that are allowed to have world-writeable files or directories
+    type: Array
+    value: []
+
+  # X11
+  - name: x11_enabled
+    description: Set to true if X11 is enabled on the system
+    type: Boolean
+    value: false
+
+  # Grub
+  - name: grub_conf_path
+    description: Grub config filepath
+    type: String
+    value: '/etc/grub2.cfg'
+
+  - name: grub_user_conf_path
+    description: Grub user config filepath
+    type: String
+    value: '/boot/grub2/user.cfg'
+
+  - name: disallowed_grub_superusers
+    description: List of default users that cannot be the default GRUB superuser
+    type: Array
+    value:
+      - root
+      - admin
+      - administrator
+
+  # Core dump
+  - name: data_at_rest_exempt
+    description: Set to true if the system is exempt from using Data at Rest
+    type: Boolean
+    value: false
+
+  - name: core_dump_expected_value
+    description: Expected value for the core dump setting
+    type: Numeric
+    value: 0
+
+  # Virtual machine
+  - name: virtual_machine
+    description: Is the target expected to be a virtual machine
+    type: Boolean
+    value: true
+
+  # Separate filesystem
+  - name: exempt_separate_filesystem
+    description: The system manages file system usage, LVM/XFS etc. or is managed by the service provider
+    type: Boolean
+    value: false
+
+  # Faillock
+  - name: faillock_tally
+    description: The default SELinux security context type of the non-default tally directory
+    type: String
+    value: "faillog_t"
+
+  # Miscellaneous
+  - name: monitor_kernel_log
+    description: Set to false if there is no monitoring of the kernel log
+    type: Boolean
+    value: true
+
+  - name: dconf_user
+    description: User to use to check dconf settings (nil means current user)
+    type: String
+    value: ''
+
+  - name: lock_delay
+    description: The screensaver lock-delay must be less than or equal to the specified value
+    type: Numeric
+    value: 5
+
+  - name: system_activity_timeout
+    description: "'(time in seconds)' Maximum system inactivity timeout"
+    type: Numeric
+    value: 600
+
+  - name: randomize_va_space
+    description: Randomize virtual address space kernel parameter
+    type: Numeric
+    value: 2
+
+  - name: non_removable_media_fs
+    description: File systems that don't correspond to removable media
+    type: Array
+    value:
+      - xfs
+      - ext4
+      - swap
+      - tmpfs
+
+  - name: approved_tunnels
+    description: "Approved configured tunnels prepended with word 'conn'"
+    type: Array
+    value: []

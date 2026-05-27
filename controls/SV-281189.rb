@@ -1,0 +1,42 @@
+control 'SV-281189' do
+  title 'RHEL 10 must require the change of at least four character classes when passwords are changed.'
+  desc <<~DESC
+    Use of a complex password helps to increase the time and resources required to compromise the password. 
+
+    Password complexity, or strength, is a measure of the effectiveness of a password in resisting attempts at guessing and brute-force attacks.
+
+    Password complexity is one factor of several that determines how long it takes to crack a password. The more complex a password is, the greater the number of possible combinations that must be tested before the password is compromised.
+  DESC
+  desc 'check', <<~CHECKTEXT
+    Verify RHEL 10 sets the value of the "minclass" option in "/etc/security/pwquality.conf" with the following command:
+
+    $ sudo grep -s minclass /etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf
+    /etc/security/pwquality.conf:minclass = 4
+
+    If the value of "minclass" is set to less than "4" or is commented out, this is a finding.
+  CHECKTEXT
+  desc 'fix', <<~FIXTEXT
+    Configure RHEL 10 to require the change of at least four character classes when passwords are changed by setting the "minclass" option.
+
+    Add or update the following line in the "/etc/security/pwquality.conf" file or a configuration file in the "/etc/security/pwquality.conf.d/" directory to contain the "minclass" parameter:
+
+    minclass = 4
+  FIXTEXT
+  impact 0.5
+  tag check_id: 'M'
+  tag severity: 'medium'
+  tag gid: 'V-281189'
+  tag rid: 'SV-281189r1195442_rule'
+  tag stig_id: 'RHEL-10-600300'
+  tag gtitle: 'SRG-OS-000072-GPOS-00040'
+  tag fix_id: 'F-85655r1195441_fix'
+  tag cci: ['CCI-004066']
+  tag nist: ['CM-6 b']
+  tag 'host'
+  tag 'container'
+
+  describe command("grep -s minclass /etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf") do
+    its('exit_status') { should cmp 0 }
+    its('stdout') { should_not be_empty }
+  end
+end

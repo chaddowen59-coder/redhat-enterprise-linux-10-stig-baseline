@@ -1,0 +1,51 @@
+control 'SV-280964' do
+  title 'RHEL 10 must block unauthorized peripherals before establishing a connection.'
+  desc <<~DESC
+    The USBGuard-daemon is the main component of the USBGuard software framework. It runs as a service in the background and enforces the USB device authorization policy for all USB devices. The policy is defined by a set of rules using a rule language described in the "usbguard-rules.conf" file. The policy and the authorization state of USB devices can be modified during runtime using the usbguard tool.
+
+    The system administrator (SA) must work with the site information system security officer (ISSO) to determine a list of authorized peripherals and establish rules within the USBGuard software framework to allow only authorized devices.
+  DESC
+  desc 'check', <<~CHECKTEXT
+    Note: If the system is virtual machine with no virtual or physical USB peripherals attached, this is not applicable.
+
+    Verify RHEL 10 USBGuard has a policy configured.
+
+    Confirm the setting with the following command:
+
+    $ sudo usbguard list-rules
+    allow id 1d6b:0001 serial
+
+    If the command does not return results, or an error is returned, ask the SA to indicate how unauthorized peripherals are being blocked.
+
+    If there is no evidence that unauthorized peripherals are being blocked before establishing a connection, this is a finding.
+  CHECKTEXT
+  desc 'fix', <<~FIXTEXT
+    Configure RHEL 10 to enable the blocking of unauthorized peripherals with the following command:
+
+    Note: This command must be run from a root shell and will create an allowlist for any USB devices currently connected to the system.
+
+    # usbguard generate-policy --no-hash > /etc/usbguard/rules.conf
+
+    Note: Enabling and starting usbguard without properly configuring it for an individual system will immediately prevent any access over a USB device such as a keyboard or mouse.
+  FIXTEXT
+  impact 0.5
+  tag check_id: 'M'
+  tag severity: 'medium'
+  tag gid: 'V-280964'
+  tag rid: 'SV-280964r1165247_rule'
+  tag stig_id: 'RHEL-10-200562'
+  tag gtitle: 'SRG-OS-000378-GPOS-00163'
+  tag fix_id: 'F-85430r1165246_fix'
+  tag cci: ['CCI-001958']
+  tag nist: ['CM-6 b']
+  tag 'host'
+
+  only_if('This control is Not Applicable to containers', impact: 0.0) {
+    !virtualization.system.eql?('docker')
+  }
+
+  describe command("usbguard list-rules") do
+    its('exit_status') { should cmp 0 }
+    its('stdout') { should_not be_empty }
+  end
+end

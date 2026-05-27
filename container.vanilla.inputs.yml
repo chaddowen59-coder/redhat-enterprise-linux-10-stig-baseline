@@ -1,0 +1,152 @@
+# This file specifies the attributes for the configurable controls
+# used in the RHEL 10 DISA STIG for vanilla (unhardened) container targets.
+
+disable_slow_controls: false
+
+monitor_kernel_log: true
+
+rpm_verify_perms_except: []
+rpm_verify_integrity_except: []
+
+banner_message_enabled: true
+log_aggregation_server: false
+
+application_groups: []
+x11_enabled: false
+
+disallowed_accounts: ["games", "gopher", "ftp"]
+
+user_accounts: ["ec2-user"]
+
+known_system_accounts:
+  [
+    "root",
+    "bin",
+    "daemon",
+    "adm",
+    "lp",
+    "sync",
+    "shutdown",
+    "halt",
+    "mail",
+    "operator",
+    "nobody",
+    "systemd-bus-proxy",
+    "ec2-user",
+  ]
+
+dconf_user: ''
+
+banner_message_text_gui:
+  "You are accessing a U.S. Government (USG) Information System (IS) that is \
+  provided for USG-authorized use only. By using this IS (which includes any \
+  device attached to this IS), you consent to the following conditions: -The USG \
+  routinely intercepts and monitors communications on this IS for purposes \
+  including, but not limited to, penetration testing, COMSEC monitoring, network \
+  operations and defense, personnel misconduct (PM), law enforcement (LE), and \
+  counterintelligence (CI) investigations. -At any time, the USG may inspect and \
+  seize data stored on this IS. -Communications using, or data stored on, this \
+  IS are not private, are subject to routine monitoring, interception, and \
+  search, and may be disclosed or used for any USG-authorized purpose. -This IS \
+  includes security measures (e.g., authentication and access controls) to \
+  protect USG interests--not for your personal benefit or privacy. \
+  -Notwithstanding the above, using this IS does not constitute consent to PM, \
+  LE or CI investigative searching or monitoring of the content of privileged \
+  communications, or work product, related to personal representation or \
+  services by attorneys, psychotherapists, or clergy, and their assistants. Such \
+  communications and work product are private and confidential. See User \
+  Agreement for details."
+
+banner_message_text_gui_limited: "I've read & consent to terms in IS user agreem't."
+
+banner_message_text_cli:
+  "You are accessing a U.S. Government (USG) Information System (IS) that is \
+  provided for USG-authorized use only. By using this IS (which includes any \
+  device attached to this IS), you consent to the following conditions: -The USG \
+  routinely intercepts and monitors communications on this IS for purposes \
+  including, but not limited to, penetration testing, COMSEC monitoring, network \
+  operations and defense, personnel misconduct (PM), law enforcement (LE), and \
+  counterintelligence (CI) investigations. -At any time, the USG may inspect and \
+  seize data stored on this IS. -Communications using, or data stored on, this \
+  IS are not private, are subject to routine monitoring, interception, and \
+  search, and may be disclosed or used for any USG-authorized purpose. -This IS \
+  includes security measures (e.g., authentication and access controls) to \
+  protect USG interests--not for your personal benefit or privacy. \
+  -Notwithstanding the above, using this IS does not constitute consent to PM, \
+  LE or CI investigative searching or monitoring of the content of privileged \
+  communications, or work product, related to personal representation or \
+  services by attorneys, psychotherapists, or clergy, and their assistants. Such \
+  communications and work product are private and confidential. See User \
+  Agreement for details."
+
+banner_message_text_cli_limited: "I've read & consent to terms in IS user agreem't."
+
+banner_message_text_ral:
+  "You are accessing a U.S. Government (USG) Information System (IS) that is \
+  provided for USG-authorized use only. By using this IS (which includes any \
+  device attached to this IS), you consent to the following conditions: -The USG \
+  routinely intercepts and monitors communications on this IS for purposes \
+  including, but not limited to, penetration testing, COMSEC monitoring, network \
+  operations and defense, personnel misconduct (PM), law enforcement (LE), and \
+  counterintelligence (CI) investigations. -At any time, the USG may inspect and \
+  seize data stored on this IS. -Communications using, or data stored on, this \
+  IS are not private, are subject to routine monitoring, interception, and \
+  search, and may be disclosed or used for any USG-authorized purpose. -This IS \
+  includes security measures (e.g., authentication and access controls) to \
+  protect USG interests--not for your personal benefit or privacy. \
+  -Notwithstanding the above, using this IS does not constitute consent to PM, \
+  LE or CI investigative searching or monitoring of the content of privileged \
+  communications, or work product, related to personal representation or \
+  services by attorneys, psychotherapists, or clergy, and their assistants. Such \
+  communications and work product are private and confidential. See User \
+  Agreement for details."
+
+banner_message_text_ral_limited: "I've read & consent to terms in IS user agreem't."
+
+lock_delay: 5
+difok: 8
+min_reuse_generations: 5
+min_len: 15
+days_of_inactivity: 0
+unsuccessful_attempts: 3
+fail_interval: 900
+lockout_time: 604800
+
+file_integrity_tool: "aide"
+file_integrity_interval: "weekly"
+
+system_activity_timeout: 600
+client_alive_interval: 600
+
+smart_card_enabled: false
+
+log_pkg_path: "/etc/rsyslog.conf"
+
+exempt_home_users: []
+
+grub_conf_path: "/etc/grub2.cfg"
+grub_user_conf_path: "/boot/grub2/user.cfg"
+disallowed_grub_superusers: ["root", "admin", "administrator"]
+
+admin_logins: []
+
+multifactor_enabled: false
+
+non_interactive_shells:
+  [
+    "/sbin/nologin",
+    "/sbin/halt",
+    "/sbin/shutdown",
+    "/bin/false",
+    "/bin/sync",
+    "/bin/true",
+  ]
+
+randomize_va_space: 2
+non_removable_media_fs: ["xfs", "ext4", "swap", "tmpfs"]
+approved_tunnels: []
+virtual_machine: true
+
+# Allow OpenSSH server in vanilla container
+allow_container_openssh_server: true
+physical_protections_employed: false

@@ -1,0 +1,49 @@
+control 'SV-281308' do
+  title 'RHEL 10 must restrict exposed kernel pointer address access.'
+  desc <<~DESC
+    Exposing kernel pointers (through procfs or "seq_printf()") exposes kernel writable structures, which may contain functions pointers. If a write vulnerability occurs in the kernel, allowing write access to any of this structure, the kernel can be compromised. This option disallows any program without the CAP_SYSLOG capability to get the addresses of kernel pointers by replacing them with "0".
+
+    Satisfies: SRG-OS-000132-GPOS-00067, SRG-OS-000433-GPOS-00192
+  DESC
+  desc 'check', <<~CHECKTEXT
+    Verify RHEL 10 is configured to restrict exposed kernel pointer address access.
+
+    Verify the runtime status of the "kernel.kptr_restrict" kernel parameter with the following command:
+
+    $ sudo sysctl kernel.kptr_restrict 
+    kernel.kptr_restrict = 1
+
+    If "kernel.kptr_restrict" is not set to "1" or is missing, this is a finding.
+  CHECKTEXT
+  desc 'fix', <<~FIXTEXT
+    Configure RHEL 10 to restrict exposed kernel pointer address access.
+
+    Create a drop-in if it does not already exist:
+
+    $ sudo vi /etc/sysctl.d/99-kernel_kptr_restrict.conf
+
+    Add the following to the file:
+
+    kernel.kptr_restrict = 1
+
+    Reload settings from all system configuration files with the following command:
+
+    $ sudo sysctl --system
+  FIXTEXT
+  impact 0.5
+  tag check_id: 'M'
+  tag severity: 'medium'
+  tag gid: 'V-281308'
+  tag rid: 'SV-281308r1167074_rule'
+  tag stig_id: 'RHEL-10-701060'
+  tag gtitle: 'SRG-OS-000132-GPOS-00067'
+  tag fix_id: 'F-85774r1167073_fix'
+  tag cci: ['CCI-001082', 'CCI-002824']
+  tag nist: ['CM-6 b']
+  tag 'host'
+  tag 'container'
+
+  describe kernel_parameter('kernel.kptr_restrict') do
+    its('value') { should cmp 1 }
+  end
+end
